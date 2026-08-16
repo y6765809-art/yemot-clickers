@@ -1,0 +1,20 @@
+{
+  "name": "yemot-clickers",
+  "version": "1.0.0",
+  "description": "מערכת קליקרים (הצבעה חיה) רב-משתמשים לימות המשיח — היברידי VPS",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.0",
+    "xlsx": "^0.18.5",
+    "yemot-router2": "^6.0.0"
+  }
+}

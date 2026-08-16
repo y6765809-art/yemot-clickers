@@ -1,0 +1,19 @@
+# Render.com Blueprint — פריסה אוטומטית של שרת הקליקרים
+# מדריך מלא: ראה DEPLOY.md
+services:
+  - type: web
+    name: yemot-clickers
+    runtime: node
+    plan: free
+    region: frankfurt        # הכי קרוב לישראל
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /dashboard.html
+    autoDeploy: true         # דחיפה ל-GitHub => פריסה אוטומטית
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # טוקן אבטחה — אחרי הפריסה הכניסו ערך אקראי בלוח הבקרה של Render,
+      # ובימות: api_add_0=secret=<אותו ערך>
+      - key: YEMOT_SECRET
+        sync: false

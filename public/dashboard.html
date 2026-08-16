@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>קליקרים — לוח בקרה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#F1E9D9;--bg2:#EBE0CB;--card:#FFFDF9;--card2:#FBF6EC;
+    --ink:#2E2113;--ink2:#5A4A34;--muted:#9A886A;
+    --gold:#B8892B;--gold-d:#8A6318;--gold-l:#E7CE8E;--gold-soft:#F3E6C4;
+    --wine:#7A2E38;--wine-d:#5E222B;
+    --line:#E4D8BF;--line2:#EFE6D2;
+    --ok:#2F7D57;--ok-l:#5FAE85;--red:#A23B29;
+    --shadow:0 6px 22px rgba(74,52,26,.09),0 1px 3px rgba(74,52,26,.06);
+    --serif:'Frank Ruhl Libre',Georgia,serif;--sans:'Assistant','Segoe UI',Arial,sans-serif;
+  }
+  body{font-family:var(--sans);color:var(--ink);min-height:100vh;
+    background:
+      radial-gradient(120vw 60vh at 90% -10%,rgba(231,206,142,.28),transparent 60%),
+      radial-gradient(90vw 55vh at 0% 110%,rgba(122,46,56,.10),transparent 62%),
+      linear-gradient(165deg,var(--bg),var(--bg2));
+    background-attachment:fixed}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
+
+  /* ── כותרת עליונה ── */
+  .masthead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:0 4px 18px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:13px;margin-inline-end:auto}
+  .crest{width:46px;height:46px;border-radius:13px;flex-shrink:0;position:relative;
+    background:linear-gradient(150deg,var(--gold-l),var(--gold) 55%,var(--gold-d));
+    box-shadow:0 4px 14px rgba(138,99,24,.32),inset 0 1px 0 rgba(255,255,255,.5);
+    display:flex;align-items:center;justify-content:center}
+  .crest::after{content:"◆";color:#fff;font-size:19px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .brand .t h1{font-family:var(--serif);font-size:1.5rem;font-weight:900;letter-spacing:.2px;line-height:1}
+  .brand .t p{font-size:.8rem;color:var(--muted);font-weight:600;margin-top:3px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:8px 15px;font-size:.86rem;font-weight:600;box-shadow:var(--shadow);white-space:nowrap}
+  .chip .k{color:var(--muted);font-weight:600}.chip b{color:var(--gold-d);font-weight:800;font-variant-numeric:tabular-nums}
+  .chip.phase{min-width:118px;text-align:center}
+  a.chip{color:var(--wine);text-decoration:none;font-weight:800;
+    background:linear-gradient(180deg,#fff,var(--card2));display:inline-flex;align-items:center;gap:7px}
+  a.chip:hover{border-color:var(--gold-l)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:940px){.grid{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:18px}
+
+  /* ── כותרת אזור ── */
+  .zone{display:flex;align-items:center;gap:11px;padding:2px 2px 2px;margin-bottom:-2px}
+  .zone .zi{width:30px;height:30px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:.95rem;color:#fff}
+  .zone.setup .zi{background:linear-gradient(150deg,var(--gold),var(--gold-d))}
+  .zone.live .zi{background:linear-gradient(150deg,var(--wine),var(--wine-d))}
+  .zone h2{font-family:var(--serif);font-size:1.22rem;font-weight:900;color:var(--ink);line-height:1}
+  .zone p{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:2px}
+
+  /* ── כרטיס ── */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;
+    box-shadow:var(--shadow);overflow:hidden}
+  .card .hd{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line2);
+    background:linear-gradient(180deg,var(--card2),transparent)}
+  .step-badge{width:30px;height:30px;border-radius:50%;flex-shrink:0;font-family:var(--serif);
+    font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;
+    color:var(--gold-d);background:radial-gradient(circle at 35% 30%,#fff,var(--gold-soft));
+    border:1.5px solid var(--gold-l);box-shadow:inset 0 1px 2px rgba(255,255,255,.7)}
+  .hd .htxt{flex:1}
+  .hd h3{font-family:var(--serif);font-size:1.06rem;font-weight:700;color:var(--ink);line-height:1.15}
+  .hd .sub{font-size:.77rem;color:var(--muted);font-weight:600;margin-top:2px}
+  .bd{padding:16px 18px}
+
+  label.fld{display:block;font-size:.82rem;color:var(--ink2);margin:0 0 6px;font-weight:700}
+  input,textarea{background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 13px;font:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
+  input::placeholder{color:#C3B492}
+  input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,137,43,.14)}
+
+  button{font:inherit;font-weight:700;border:none;border-radius:11px;padding:10px 16px;cursor:pointer;
+    color:#3a2a12;background:linear-gradient(180deg,#fff,var(--gold-soft));border:1.5px solid var(--gold-l);
+    box-shadow:0 2px 7px rgba(184,137,43,.15);transition:transform .08s,filter .15s,box-shadow .15s}
+  button:hover{filter:brightness(1.02);box-shadow:0 4px 12px rgba(184,137,43,.22)}
+  button:active{transform:translateY(1px)}
+  button.primary{color:#fff;background:linear-gradient(180deg,var(--gold),var(--gold-d));border-color:var(--gold-d)}
+  button.green{color:#fff;background:linear-gradient(180deg,var(--ok-l),var(--ok));border-color:#276b4a}
+  button.wine{color:#fff;background:linear-gradient(180deg,#9a4450,var(--wine));border-color:var(--wine-d)}
+  button.red{color:#fff;background:linear-gradient(180deg,#c0563f,var(--red));border-color:#87301f}
+  button.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink2);box-shadow:none}
+  button.ghost:hover{border-color:var(--gold-l);color:var(--ink)}
+  button.sm{padding:7px 13px;font-size:.83rem}
+  .btns{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+  .msg{font-size:.82rem;color:var(--ok);font-weight:700;margin-top:9px;min-height:1em}
+
+  /* לוגו */
+  .logobox{display:flex;align-items:center;gap:15px}
+  .logoprev{width:84px;height:84px;border-radius:13px;border:1.5px dashed var(--line);background:var(--card2);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.73rem;
+    overflow:hidden;text-align:center;flex-shrink:0;padding:6px}
+  .logoprev img{max-width:100%;max-height:100%;object-fit:contain}
+  input[type=file]{padding:8px;font-size:.83rem;background:var(--card2);cursor:pointer}
+  input[type=file]::-webkit-file-upload-button{font:inherit;font-weight:700;border:none;border-radius:8px;
+    padding:6px 12px;margin-inline-end:10px;cursor:pointer;color:#3a2a12;
+    background:linear-gradient(180deg,#fff,var(--gold-soft));border:1px solid var(--gold-l)}
+
+  /* משתתפים */
+  .prow{display:flex;gap:8px;margin-bottom:9px;align-items:center}
+  .prow input.ph{flex:0 0 42%}
+  .prow button{padding:9px 12px}
+
+  /* אקסל */
+  .xlsxbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 12px;margin-bottom:13px;
+    background:linear-gradient(180deg,#F2F8F0,#E9F2E5);border:1px solid #CDE4C7;border-radius:12px}
+  .xlsxbar .upbtn{font:inherit;font-weight:700;border-radius:11px;padding:7px 13px;font-size:.83rem;cursor:pointer;
+    color:#fff;background:linear-gradient(180deg,#5FAE85,#2F7D57);border:1.5px solid #276b4a;display:inline-flex;align-items:center;gap:5px}
+  .xlsxbar .upbtn:hover{filter:brightness(1.04)}
+  .xlsxbar .dlbtn{color:#1f5c3e;background:#fff;border:1.5px solid #9eccb0}
+  .xlsxhint{font-size:.76rem;color:#4a7a5e;font-weight:600;margin-inline-start:auto}
+  /* שאלות */
+  .qcard{border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:13px;background:var(--card2)}
+  .qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .qhead b{font-family:var(--serif);color:var(--ink);font-size:1rem}
+  .opt-row{display:flex;align-items:center;gap:9px;margin-top:7px}
+  .opt-row .onum{width:27px;height:27px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:#fff;flex-shrink:0;font-size:.83rem;background:linear-gradient(160deg,#B9976A,#8A6E48)}
+  .opt-row label{color:var(--muted);font-size:.78rem;white-space:nowrap;display:flex;gap:5px;align-items:center;cursor:pointer}
+  .opt-row input[type=radio]{width:auto}
+
+  /* קוד חדר — כרטיס 4 */
+  .roombox{text-align:center;padding:6px 0 2px}
+  .roombox .rc{font-family:var(--serif);font-size:2.7rem;font-weight:900;letter-spacing:.14em;direction:ltr;
+    color:var(--gold-d);line-height:1;margin:4px 0 2px}
+  .roombox .cap{font-size:.85rem;color:var(--ink2);font-weight:600}
+  .dial{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .dial .box{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 10px}
+  .dial .box .lab{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .dial .box .val{font-family:var(--serif);font-size:1.25rem;font-weight:800;direction:ltr;margin-top:3px;color:var(--ink)}
+
+  /* ── ניהול חי ── */
+  .live-card{border-color:var(--gold-l)}
+  .live-card .hd{background:linear-gradient(180deg,#faf1e2,transparent)}
+  .nowbar{background:linear-gradient(180deg,#fff8e9,#fbeecd);border:1.5px solid var(--gold-l);
+    border-radius:13px;padding:14px 16px;margin-bottom:15px;position:relative;overflow:hidden}
+  .nowbar::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:5px;
+    background:linear-gradient(var(--gold),var(--gold-d))}
+  .nowq{font-family:var(--serif);font-weight:700;color:var(--ink);font-size:1.1rem;line-height:1.3;padding-inline-start:8px}
+  .nowmeta{display:flex;gap:10px;align-items:center;margin-top:9px;font-size:.85rem;color:var(--ink2);font-weight:700;padding-inline-start:8px}
+  .votepill{padding:3px 12px;border-radius:20px;font-weight:800;font-size:.8rem}
+  .votepill.open{background:#DCF1E3;color:var(--ok)}.votepill.closed{background:#F1E0DA;color:var(--red)}
+  .votepill.neutral{background:var(--line2);color:var(--muted)}
+  .steps{display:flex;flex-direction:column;gap:11px}
+  .step{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1.5px solid var(--line);
+    border-radius:13px;background:var(--card2);flex-wrap:wrap;transition:border-color .2s,box-shadow .2s,background .2s}
+  .step.active{border-color:var(--gold);background:#fffbf1;box-shadow:0 0 0 3px rgba(184,137,43,.15)}
+  .stepn{width:27px;height:27px;border-radius:50%;background:#fff;border:1.5px solid var(--gold-l);color:var(--gold-d);
+    font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.86rem;flex-shrink:0}
+  .step.active .stepn{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#fff;border-color:var(--gold-d)}
+  .stept{font-weight:800;color:var(--ink);flex:1;min-width:96px;font-size:.95rem}
+  .step button{margin:0}
+  .end-row{margin-top:15px;padding-top:14px;border-top:1px dashed var(--line);display:flex;gap:9px;flex-wrap:wrap}
+
+  /* תוצאות */
+  .res-row{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .rnum{width:31px;height:31px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:#fff;flex-shrink:0;background:linear-gradient(160deg,#B9976A,#8A6E48)}
+  .track{flex:1;background:var(--bg2);border-radius:10px;overflow:hidden;height:36px;position:relative;border:1px solid var(--line)}
+  .fill{height:100%;border-radius:9px;transition:width .5s cubic-bezier(.2,.85,.2,1);min-width:2px;
+    background:linear-gradient(90deg,var(--gold-d),var(--gold-l))}
+  .res-row.correct .fill{background:linear-gradient(90deg,var(--ok),var(--ok-l))}
+  .res-row.correct .track{outline:2px solid var(--ok);outline-offset:-1px}
+  .lbl{position:absolute;inset:0;display:flex;align-items:center;padding:0 12px;justify-content:space-between;
+    font-weight:700;font-size:.9rem;color:#3a2a12}
+  .lbl .cnt{font-variant-numeric:tabular-nums;font-weight:800}
+  .tag{font-size:.66rem;background:var(--ok);color:#fff;padding:2px 8px;border-radius:20px;margin-inline-start:6px;font-weight:800}
+  ol.lead{padding-inline-start:6px;list-style:none;counter-reset:l}
+  ol.lead li{display:flex;align-items:center;gap:11px;padding:8px 4px;border-bottom:1px solid var(--line2);font-weight:700}
+  ol.lead li:last-child{border-bottom:none}
+  ol.lead li::before{counter-increment:l;content:counter(l);width:25px;height:25px;flex-shrink:0;
+    border-radius:50%;background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    font-size:.8rem;display:flex;align-items:center;justify-content:center;font-weight:800}
+  ol.lead li:nth-child(1)::before{background:linear-gradient(160deg,var(--gold-l),var(--gold));color:#fff;border-color:var(--gold-d)}
+  ol.lead li:nth-child(2)::before{background:#E3E3E3;color:#555;border-color:#c9c9c9}
+  ol.lead li:nth-child(3)::before{background:#E7C9A3;color:#6b4a24;border-color:#cda870}
+  ol.lead li .pts{margin-inline-start:auto;color:var(--gold-d);font-weight:800;font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted);font-size:.84rem}
+  .phase{font-weight:800;color:var(--wine)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="brand"><div class="crest"></div>
+      <div class="t"><h1>קליקרים</h1><p>לוח בקרה למנחה</p></div></div>
+    <div class="chip"><span class="k">חדר</span> <b id="room">—</b></div>
+    <div class="chip"><span class="k">הצביעו</span> <b id="total">0</b></div>
+    <div class="chip phase"><span class="k">שלב:</span> <span class="phase" id="phase">—</span></div>
+    <a class="chip" id="pl" target="_blank">מסך הקרנה ↗</a>
+  </div>
+
+  <div class="grid">
+    <!-- ══ הגדרות והכנה ══ -->
+    <div class="col">
+      <div class="zone setup"><div class="zi">✓</div>
+        <div><h2>הגדרות והכנה</h2><p>בצעו את ארבעת השלבים לפי הסדר — לפני תחילת המשחק</p></div></div>
+
+      <!-- שלב 1 -->
+      <div class="card">
+        <div class="hd"><div class="step-badge">1</div><div class="htxt">
+          <h3>מיתוג המשחק</h3><div class="sub">כותרת ולוגו שיוצגו על מסך ההקרנה לקהל</div></div></div>
+        <div class="bd">
+          <label class="fld">כותרת המשחק</label>
+          <input id="title" placeholder="למשל: חידון חנוכה — קהילת בית ישראל">
+          <div style="height:14px"></div>
+          <label class="fld">לוגו (לא חובה)</label>
+          <div class="logobox">
+            <div class="logoprev" id="logoPrev">אין לוגו</div>
+            <div style="flex:1">
+              <input type="file" id="logoFile" accept="image/*">
+              <div class="btns"><button class="primary sm" onclick="saveBranding()">שמירת מיתוג</button>
+                <button class="ghost sm" onclick="clearLogo()">הסרת לוגו</button></div>
+            </div>
+          </div>
+          <div class="msg" id="brandMsg"></div>
+        </div>
+      </div>
+
+      <!-- שלב 2 -->
+      <div class="card">
+        <div class="hd"><div class="step-badge">2</div><div class="htxt">
+          <h3>רישום משתתפים</h3><div class="sub">שיוך מספר טלפון → שם, כדי שהתוצאות יציגו שמות</div></div></div>
+        <div class="bd">
+          <div class="muted" style="margin-bottom:11px">לא חובה — בלי רישום יוצגו 4 הספרות האחרונות של המתקשר.</div>
+          <div id="players"></div>
+          <div class="btns"><button class="ghost sm" onclick="addPlayer()">הוספת משתתף +</button>
+            <button class="primary sm" onclick="savePlayers()">שמירת רשימה</button></div>
+          <div class="msg" id="playersMsg"></div>
+        </div>
+      </div>
+
+      <!-- שלב 3 -->
+      <div class="card">
+        <div class="hd"><div class="step-badge">3</div><div class="htxt">
+          <h3>מאגר השאלות</h3><div class="sub">נסחו כל שאלה, מלאו תשובות וסמנו את הנכונה</div></div></div>
+        <div class="bd">
+          <div class="xlsxbar">
+            <button class="upbtn dlbtn" onclick="downloadTemplate()">⬇ הורדת תבנית אקסל</button>
+            <label class="upbtn">⬆ טעינת אקסל מלא
+              <input type="file" id="xlsxFile" accept=".xlsx,.xls,.csv" onchange="handleXlsx(this.files[0])" hidden></label>
+            <span class="xlsxhint">מלאו באקסל וטענו — יחליף את המאגר</span>
+          </div>
+          <div id="bank"></div>
+          <div class="btns"><button class="ghost sm" onclick="addQ()">הוספת שאלה +</button>
+            <button class="primary sm" onclick="saveBank()">שמירת מאגר</button></div>
+          <div class="msg" id="bankMsg"></div>
+        </div>
+      </div>
+
+      <!-- שלב 4 -->
+      <div class="card">
+        <div class="hd"><div class="step-badge">4</div><div class="htxt">
+          <h3>הפצת קוד החדר</h3><div class="sub">מסרו לקהל את מספר החיוג ואת קוד החדר</div></div></div>
+        <div class="bd">
+          <div class="roombox">
+            <div class="cap">קוד החדר שלכם</div>
+            <div class="rc" id="roomBig">—</div>
+          </div>
+          <div class="dial">
+            <div class="box"><div class="lab">מחייגים אל</div><div class="val" id="dialPhone">033050575</div></div>
+            <div class="box"><div class="lab">מקישים קוד</div><div class="val" id="dialRoom">—</div></div>
+          </div>
+          <div class="muted" style="margin-top:13px;text-align:center">כשהכל מוכן — עברו ל<b>ניהול המשחק</b> בצד השני והתחילו ▶</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ניהול משחק חי ══ -->
+    <div class="col">
+      <div class="zone live"><div class="zi">▶</div>
+        <div><h2>ניהול משחק חי</h2><p>הלחצנים שמפעילים את המשחק בזמן אמת</p></div></div>
+
+      <div class="card live-card">
+        <div class="hd"><div class="step-badge" style="color:var(--wine);border-color:#d9a9af;background:radial-gradient(circle at 35% 30%,#fff,#f4dfe1)">✦</div>
+          <div class="htxt"><h3>שליטת משחק</h3><div class="sub">עקבו אחר השלב המודגש — זו הפעולה הבאה</div></div></div>
+        <div class="bd">
+          <div class="nowbar">
+            <div class="nowq" id="nowq">— המשחק בלובי, ממתין להתחלה —</div>
+            <div class="nowmeta"><span id="nowidx">מאגר טרם התחיל</span>
+              <span class="votepill neutral" id="votepill">בלובי</span></div>
+          </div>
+          <div class="steps">
+            <div class="step" id="st1">
+              <span class="stepn">1</span><span class="stept">התחלת המשחק</span>
+              <button class="green" onclick="api('start')">▶ התחל</button>
+            </div>
+            <div class="step" id="st2">
+              <span class="stepn">2</span><span class="stept">הצבעה טלפונית</span>
+              <button onclick="api('open',{active:true})">🟢 פתח</button>
+              <button class="ghost" onclick="api('open',{active:false})">🔴 סגור</button>
+            </div>
+            <div class="step" id="st3">
+              <span class="stepn">3</span><span class="stept">חשיפת התשובה</span>
+              <button class="primary" onclick="api('reveal')">✓ חשוף תשובה</button>
+            </div>
+            <div class="step" id="st4">
+              <span class="stepn">4</span><span class="stept">מעבר לשאלה הבאה</span>
+              <button class="primary" onclick="api('next')">⏭ שאלה הבאה</button>
+            </div>
+          </div>
+          <div class="end-row">
+            <button class="wine" onclick="api('end')">🏁 סיים משחק</button>
+            <button class="ghost" onclick="if(confirm('לאפס את המשחק ולחזור ללובי?'))api('reset')">↺ איפוס ללובי</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd"><div class="htxt"><h3>תוצאות חיות</h3>
+          <div class="sub">מתעדכן בזמן אמת עם כל הקשה</div></div></div>
+        <div class="bd">
+          <div id="bars"></div>
+          <div id="correctInfo" class="muted" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd"><div class="htxt"><h3>לוח מובילים</h3>
+          <div class="sub">10 המובילים לפי ניקוד מצטבר</div></div></div>
+        <div class="bd">
+          <ol class="lead" id="lead"></ol>
+          <div id="noScores" class="muted">עדיין אין ניקוד — יופיע אחרי חשיפת התשובה הראשונה.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+  const params=new URLSearchParams(location.search);
+  const room=params.get('room')||'1234';
+  const phone=params.get('phone')||'033050575';
+  document.getElementById('room').textContent=room;
+  document.getElementById('roomBig').textContent=room;
+  document.getElementById('dialRoom').textContent=room;
+  document.getElementById('dialPhone').textContent=phone;
+  document.getElementById('pl').href=`presenter.html?room=${room}&phone=${encodeURIComponent(phone)}`;
+  const post=(p,b)=>fetch(`/api/${room}/${p}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+  const api=(p,b)=>post(p,b);
+  const flash=(id,txt)=>{const e=document.getElementById(id);e.textContent=txt;setTimeout(()=>{if(e.textContent===txt)e.textContent='';},2600);};
+
+  // ── שלב 1: מיתוג ──
+  let logoData='';
+  document.getElementById('logoFile').addEventListener('change',e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const rd=new FileReader(); rd.onload=()=>{ logoData=rd.result;
+      document.getElementById('logoPrev').innerHTML=`<img src="${logoData}">`; }; rd.readAsDataURL(f);
+  });
+  function clearLogo(){ logoData=''; document.getElementById('logoPrev').textContent='אין לוגו';
+    document.getElementById('logoFile').value=''; post('branding',{logo:''}); flash('brandMsg','הלוגו הוסר'); }
+  async function saveBranding(){ await post('branding',{title:document.getElementById('title').value.trim(),logo:logoData||undefined});
+    flash('brandMsg','✓ המיתוג נשמר והועבר למסך'); }
+  (async()=>{ try{ const b=await(await fetch(`/api/${room}/branding`)).json();
+    document.getElementById('title').value=b.title||''; if(b.logo){logoData=b.logo;
+      document.getElementById('logoPrev').innerHTML=`<img src="${b.logo}">`;} }catch(e){} })();
+
+  // ── שלב 2: משתתפים ──
+  const playersEl=document.getElementById('players');
+  function esc(s){return String(s).replace(/"/g,'&quot;');}
+  function addPlayer(phone,name){ const d=document.createElement('div'); d.className='prow';
+    d.innerHTML=`<input class="ph" placeholder="טלפון (0501234567)" value="${esc(phone||'')}">
+      <input class="nm" placeholder="שם המשתתף" value="${esc(name||'')}">
+      <button class="ghost sm" onclick="this.parentElement.remove()">✕</button>`;
+    playersEl.appendChild(d); }
+  async function savePlayers(){ const list=[...document.querySelectorAll('.prow')].map(r=>({
+      phone:r.querySelector('.ph').value.trim(),name:r.querySelector('.nm').value.trim()})).filter(p=>p.phone&&p.name);
+    const res=await(await post('players',{players:list})).json();
+    flash('playersMsg',`✓ נשמרו ${res.count} משתתפים`); }
+  (async()=>{ try{ const d=await(await fetch(`/api/${room}/players`)).json();
+    (d.players||[]).forEach(p=>addPlayer(p.phone,p.name)); }catch(e){}
+    if(!document.querySelectorAll('.prow').length){ addPlayer(); addPlayer(); } })();
+
+  // ── שלב 3: מאגר שאלות ──
+  const bankEl=document.getElementById('bank');
+  function qCardHTML(){ let o='';
+    for(let i=1;i<=6;i++) o+=`<div class="opt-row"><div class="onum">${i}</div>
+      <input class="qopt" placeholder="נוסח תשובה ${i}"><label><input type="radio" value="${i}"> נכונה</label></div>`;
+    return `<div class="qcard"><div class="qhead"><b>שאלה <span class="qnum"></span></b>
+      <button class="ghost sm" onclick="this.closest('.qcard').remove();renumber()">מחק</button></div>
+      <input class="qtext" placeholder="נוסח השאלה"><div style="margin-top:7px">${o}</div></div>`; }
+  function renumber(){ document.querySelectorAll('.qcard').forEach((c,i)=>{ c.querySelector('.qnum').textContent=i+1;
+    const nm='c'+i; c.querySelectorAll('input[type=radio]').forEach(r=>r.name=nm); }); }
+  function addQ(data){ bankEl.insertAdjacentHTML('beforeend',qCardHTML());
+    if(data){ const c=bankEl.lastElementChild; c.querySelector('.qtext').value=data.text||'';
+      c.querySelectorAll('.qopt').forEach((o,i)=>o.value=(data.options&&data.options[i])||'');
+      if(data.correct){ const rb=c.querySelector(`input[type=radio][value="${data.correct}"]`); if(rb)rb.checked=true; } }
+    renumber(); }
+  function readBank(){ return [...document.querySelectorAll('.qcard')].map(c=>({
+    text:c.querySelector('.qtext').value.trim(),
+    options:[...c.querySelectorAll('.qopt')].map(o=>o.value.trim()),
+    correct:(c.querySelector('input[type=radio]:checked')||{}).value||null})); }
+  async function saveBank(){ const qs=readBank(); await post('questions',{questions:qs});
+    flash('bankMsg',`✓ נשמרו ${qs.length} שאלות במאגר`); }
+
+  // ── אקסל: תבנית להורדה + טעינה חזרה ──
+  const XLSX_HDR=['שאלה','תשובה 1','תשובה 2','תשובה 3','תשובה 4','תשובה 5','תשובה 6','מספר התשובה הנכונה (1-6)'];
+  const pad6=a=>{const o=(a||[]).slice(0,6);while(o.length<6)o.push('');return o;};
+  function downloadTemplate(){
+    const cur=readBank().filter(q=>q.text||q.options.some(o=>o));
+    const rows=[XLSX_HDR];
+    if(cur.length){ cur.forEach(q=>rows.push([q.text,...pad6(q.options),q.correct||''])); }
+    else{
+      rows.push(['מי בנה את בית המקדש הראשון?','דוד המלך','שלמה המלך','חזקיהו','עזרא הסופר','','',2]);
+      for(let i=0;i<11;i++) rows.push(['','','','','','','','']);
+    }
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:42},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:24}];
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'שאלות');
+    XLSX.writeFile(wb,`שאלות-חדר-${room}.xlsx`);
+    flash('bankMsg','✓ התבנית הורדה — מלאו וטענו חזרה');
+  }
+  function handleXlsx(file){
+    if(!file) return;
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let start=(rows[0]&&String(rows[0][0]).trim()==='שאלה')?1:0;
+        const qs=[];
+        for(let i=start;i<rows.length;i++){
+          const r=rows[i]||[];
+          const text=String(r[0]||'').trim();
+          const options=[]; for(let c=1;c<=6;c++) options.push(String(r[c]||'').trim());
+          if(!text&&!options.some(o=>o)) continue;
+          const correct=parseInt(String(r[7]||'').trim(),10)||null;
+          qs.push({text,options,correct});
+        }
+        if(!qs.length){ flash('bankMsg','לא נמצאו שאלות בקובץ'); document.getElementById('xlsxFile').value=''; return; }
+        bankEl.innerHTML=''; qs.forEach(q=>addQ(q)); renumber();
+        post('questions',{questions:qs});
+        flash('bankMsg',`✓ נטענו ${qs.length} שאלות מהאקסל ונשמרו`);
+      }catch(err){ flash('bankMsg','שגיאה בקריאת הקובץ: '+err.message); }
+      document.getElementById('xlsxFile').value='';
+    };
+    rd.readAsArrayBuffer(file);
+  }
+  (async()=>{ try{ const d=await(await fetch(`/api/${room}/results`)).json();
+    if(d.question&&d.totalQuestions){/* אם כבר יש משחק פעיל, לא נדרוס */} }catch(e){} })();
+
+  // ── תוצאות חיות ──
+  const bars=document.getElementById('bars');
+  for(let i=1;i<=6;i++) bars.insertAdjacentHTML('beforeend',
+    `<div class="res-row" id="row${i}"><div class="rnum">${i}</div>
+      <div class="track"><div class="fill" id="fill${i}" style="width:0"></div>
+        <div class="lbl"><span id="lbl${i}">—</span><span class="cnt"><span id="cnt${i}">0</span> · <span id="pct${i}">0%</span></span></div></div></div>`);
+  const PH={lobby:'לובי',question:'שאלה פעילה',revealed:'נחשף',ended:'הסתיים'};
+
+  function render(d){
+    const counts=d.counts||{},total=d.total||0,opts=(d.question&&d.question.options)||[];
+    document.getElementById('total').textContent=total;
+    document.getElementById('phase').textContent=PH[d.phase]||d.phase;
+    // באנר "עכשיו"
+    const nowq=document.getElementById('nowq'),nowidx=document.getElementById('nowidx'),vp=document.getElementById('votepill');
+    if(d.phase==='lobby'){ nowq.textContent='— המשחק בלובי, ממתין להתחלה —';
+      nowidx.textContent=`מאגר: ${d.totalQuestions} שאלות מוכנות`; vp.className='votepill neutral'; vp.textContent='בלובי'; }
+    else if(d.phase==='ended'){ nowq.textContent='המשחק הסתיים';
+      nowidx.textContent=d.winner?`מנצח: ${d.winner.name} (${d.winner.pts} נק')`:'אין משתתפים';
+      vp.className='votepill neutral'; vp.textContent='סיום'; }
+    else{ nowq.textContent=(d.question&&d.question.text)||'—';
+      nowidx.textContent=`שאלה ${d.idx+1} מתוך ${d.totalQuestions}`;
+      const open=d.active; vp.className='votepill '+(open?'open':'closed');
+      vp.textContent=d.phase==='revealed'?'נחשף':open?'הצבעה פתוחה':'הצבעה סגורה'; }
+    // הדגשת השלב הפעיל
+    let act=0;
+    if(d.phase==='lobby')act=1; else if(d.phase==='question')act=d.active?2:3; else if(d.phase==='revealed')act=4;
+    for(let s=1;s<=4;s++)document.getElementById('st'+s).classList.toggle('active',s===act);
+    // עמודות תוצאה
+    const n=opts.filter(x=>x&&x.trim()).length||0;
+    for(let i=1;i<=6;i++){
+      const c=counts[i]||0,pct=total?Math.round(c/total*100):0;
+      document.getElementById('fill'+i).style.width=pct+'%';
+      document.getElementById('cnt'+i).textContent=c;document.getElementById('pct'+i).textContent=pct+'%';
+      const label=opts[i-1]&&opts[i-1].trim()?opts[i-1]:'—';
+      document.getElementById('lbl'+i).innerHTML=label+(d.correct==i?'<span class="tag">נכונה</span>':'');
+      const row=document.getElementById('row'+i);
+      row.style.display=(i<=n||n===0)?'flex':'none';
+      row.classList.toggle('correct',d.correct==i);
+    }
+    document.getElementById('correctInfo').textContent=
+      (d.revealed&&d.correctVoters)?`ענו נכון (${d.correctVoters.length}): `+(d.correctVoters.join(', ')||'אף אחד'):'';
+    const lb=d.leaderboard||[];
+    document.getElementById('noScores').style.display=lb.length?'none':'block';
+    document.getElementById('lead').innerHTML=lb.map(x=>`<li><span>${x.name}</span><span class="pts">${x.pts} נק'</span></li>`).join('');
+  }
+
+  const proto=location.protocol==='https:'?'wss':'ws';
+  function connect(){const ws=new WebSocket(`${proto}://${location.host}/?room=${room}`);
+    ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.type==='branding')return;render(m);};
+    ws.onclose=()=>setTimeout(connect,2000);}
+  connect();
+
+  addQ(); addQ(); // שתי שאלות ריקות להתחלה
+</script>
+</body>
+</html>

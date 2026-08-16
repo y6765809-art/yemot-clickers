@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>קליקרים — מסך הקרנה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --gold1:#E7CE8E;--gold2:#B8892B;--gold3:#8A6318;--gold-deep:#6E4E14;
+    --cream:#2E2113;--cream-dim:#7C6A4A;
+    --ok:#2F7D57;
+    --a1:#9B2D3A;--a2:#C05621;--a3:#6B7A2E;--a4:#2E6B4F;--a5:#6E3B5E;--a6:#7A4A26;
+    --glass:rgba(255,253,246,.72);--line:rgba(184,137,43,.32);
+    --serif:'Frank Ruhl Libre','David Libre',Georgia,serif;
+    --sans:'Assistant','Segoe UI',Arial,sans-serif;
+  }
+  html,body{height:100%}
+  body{font-family:var(--sans);color:var(--cream);height:100vh;overflow:hidden;position:relative;
+    background:
+      radial-gradient(70vw 55vh at 50% -8%,rgba(231,206,142,.5),transparent 62%),
+      radial-gradient(55vw 45vh at 88% 112%,rgba(122,46,56,.09),transparent 68%),
+      linear-gradient(165deg,#F6EEDC 0%,#EFE4CD 55%,#E9DDC4 100%)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(48vw 40vh at 50% 46%,rgba(255,255,255,.35),transparent 70%)}
+  /* זהב עמוק וקריא על רקע בהיר (בלי clip שביר) */
+  .goldtext{color:#9A6B16;text-shadow:0 1px 0 rgba(255,255,255,.55)}
+  .screen{display:none;height:100vh;flex-direction:column;padding:4vh 5vw;position:relative;z-index:1}
+  .screen.on{display:flex}
+  .center{align-items:center;justify-content:center;text-align:center;gap:2.4vh}
+  .logo{max-height:16vh;max-width:40vw;object-fit:contain;filter:drop-shadow(0 .6vh 1.6vh rgba(0,0,0,.4));display:none}
+  .logo.show{display:block}
+  /* לובי */
+  #lobby h1{font-family:var(--serif);font-size:7.5vh;font-weight:900;letter-spacing:.2vh}
+  #lobby .call{font-size:3.2vh;font-weight:600;color:var(--cream-dim)}
+  #lobby .num{width:auto;height:auto;white-space:nowrap;font-family:var(--serif);font-size:8.5vh;font-weight:900;
+    letter-spacing:.4vh;direction:ltr;color:#9A6B16;
+    background:linear-gradient(180deg,#FFFDF8,#F6ECD4);border:.35vh solid var(--gold2);border-radius:2.4vh;
+    padding:1.2vh 4vw;box-shadow:0 1.4vh 3.4vh rgba(138,99,24,.22),inset 0 1px 0 rgba(255,255,255,.7)}
+  #lobby .room{font-size:3vh;background:var(--glass);border:1px solid var(--line);border-radius:6vh;
+    padding:1.2vh 3.2vw;backdrop-filter:blur(8px);box-shadow:0 .6vh 1.8vh rgba(138,99,24,.1)} #lobby .room b{color:var(--gold2)}
+  .pulse{animation:p 1.8s ease-in-out infinite}@keyframes p{0%,100%{opacity:.95}50%{opacity:.45}}
+  /* שאלה */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:2vw;margin-bottom:2.4vh}
+  .topbar .logo{max-height:8vh;max-width:20vw}
+  .q{flex:1;font-family:var(--serif);font-size:4.6vh;font-weight:700;line-height:1.2;
+    background:var(--glass);border:1px solid var(--line);border-radius:2.2vh;padding:2vh 2.4vw;backdrop-filter:blur(6px)}
+  .meta{text-align:center;background:var(--glass);border:1px solid var(--line);border-radius:2vh;
+    padding:1.4vh 2vw;backdrop-filter:blur(8px);white-space:nowrap;min-width:12vw}
+  .total{font-family:var(--serif);font-size:5.4vh;font-weight:900;line-height:1}
+  .total small{font-size:1.6vh;color:var(--cream-dim);font-weight:600;display:block;margin-top:.4vh}
+  .room2{font-size:1.8vh;color:var(--cream-dim);margin-top:.6vh}.room2 b{color:var(--gold2);font-size:2.4vh}
+  .bars{flex:1;display:flex;flex-direction:column;justify-content:center;gap:1.9vh}
+  .row{display:flex;align-items:center;gap:1.8vw;transition:opacity .35s,transform .35s}
+  .num{width:7.8vh;height:7.8vh;border-radius:1.8vh;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:3.6vh;color:#fff;flex-shrink:0;box-shadow:0 .5vh 1.4vh rgba(0,0,0,.35);
+    border:1px solid rgba(255,255,255,.14)}
+  .track{flex:1;background:rgba(184,137,43,.12);border:1px solid var(--line);border-radius:1.8vh;
+    overflow:hidden;height:7.8vh;position:relative;box-shadow:inset 0 1px 3px rgba(138,99,24,.12)}
+  .fill{height:100%;border-radius:1.8vh;transition:width .6s cubic-bezier(.2,.85,.2,1);min-width:4px;
+    background:linear-gradient(90deg,var(--gold-deep),var(--gold2) 60%,var(--gold1))}
+  .lbl{position:absolute;inset:0;display:flex;align-items:center;padding:0 2.4vw;justify-content:space-between;
+    font-weight:700;font-size:3vh;color:#2A1810;text-shadow:0 1px 1px rgba(255,255,255,.25)}
+  .lbl .cnt{color:#3a2412;font-weight:800}
+  .row .lbl .name{color:var(--cream)}
+  .fill[style*="width: 0"]~.lbl .name,.track .lbl .name{color:var(--cream)}
+  .row.correct{transform:scale(1.02)}
+  .row.correct .fill{background:linear-gradient(90deg,#1F7A56,var(--ok))}
+  .row.correct .track{outline:.5vh solid var(--ok);box-shadow:0 0 4vh rgba(63,217,155,.55)}
+  .row.correct .lbl{color:#06231a}
+  .row.dim{opacity:.28}
+  .tag{font-size:2vh;background:var(--ok);color:#06231a;padding:.2vh 1.3vh;border-radius:3vh;margin-inline-start:1vw;font-weight:800}
+  /* מנצח — פודיום 3 מדרגות */
+  #ended h1{font-family:var(--serif);font-size:6.4vh;font-weight:900}
+  #ended .subttl{font-size:2.5vh;color:var(--cream-dim);font-weight:600;margin-top:-1.2vh}
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:2.2vw;margin-top:2.4vh}
+  .pod{display:flex;flex-direction:column;align-items:center;width:19vw;max-width:300px}
+  .pod .crown{font-size:4.6vh;line-height:1;margin-bottom:.5vh;filter:drop-shadow(0 .4vh 1vh rgba(0,0,0,.45));
+    opacity:0;transform:translateY(1vh);transition:opacity .5s,transform .5s}
+  .pod.p1 .crown{opacity:1;transform:translateY(0);animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-.9vh)}}
+  .pod .avatar{width:11.5vh;height:11.5vh;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-weight:900;font-size:4.6vh;color:#2a1810;margin-bottom:1vh;
+    border:.4vh solid rgba(255,255,255,.35);box-shadow:0 1vh 3vh rgba(0,0,0,.4)}
+  .pod .name{font-family:var(--serif);font-size:2.9vh;font-weight:800;color:var(--cream);margin-bottom:1vh;
+    text-align:center;max-width:18vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pod .pedestal{width:100%;border-radius:1.6vh 1.6vh 0 0;display:flex;flex-direction:column;align-items:center;
+    padding-top:1.8vh;background:linear-gradient(180deg,var(--glass),rgba(247,231,196,.03));
+    border:1px solid var(--line);border-bottom:none;backdrop-filter:blur(6px)}
+  .pod .rank{font-family:var(--serif);font-size:5.2vh;font-weight:900;line-height:1;color:var(--cream-dim)}
+  .pod .pts{font-size:2.4vh;color:var(--gold2);font-weight:700;margin-top:.5vh}
+  .pod.p1 .avatar{width:13.5vh;height:13.5vh;font-size:5.6vh;background:linear-gradient(160deg,var(--gold1),var(--gold3));
+    box-shadow:0 0 5vh rgba(245,216,136,.6),0 1vh 3vh rgba(0,0,0,.4)}
+  .pod.p1 .pedestal{height:27vh;border-color:var(--gold2);
+    background:linear-gradient(180deg,rgba(228,195,106,.34),rgba(228,195,106,.06));
+    box-shadow:0 0 6vh rgba(228,195,106,.4)}
+  .pod.p1 .rank{color:var(--gold3)}.pod.p1 .name{color:var(--gold3)}
+  .pod.p2 .avatar{background:linear-gradient(160deg,#EDEDED,#B5B5B5)}
+  .pod.p2 .pedestal{height:19.5vh}
+  .pod.p3 .avatar{background:linear-gradient(160deg,#E7C9A3,#BE8A53)}
+  .pod.p3 .pedestal{height:14.5vh}
+  .fulllead{margin-top:3vh;display:flex;flex-wrap:wrap;justify-content:center;gap:1vh 2.4vw;
+    font-size:2.2vh;color:var(--cream-dim)}
+  .fulllead span b{color:var(--gold2)}
+  .n1{background:linear-gradient(135deg,#B8404E,var(--a1))}.n2{background:linear-gradient(135deg,#D96A2E,var(--a2))}
+  .n3{background:linear-gradient(135deg,#8A9A3C,var(--a3))}.n4{background:linear-gradient(135deg,#3B8A67,var(--a4))}
+  .n5{background:linear-gradient(135deg,#8B4E77,var(--a5))}.n6{background:linear-gradient(135deg,#9A6134,var(--a6))}
+</style>
+</head>
+<body>
+  <!-- לובי -->
+  <div class="screen center on" id="lobby">
+    <img class="logo" id="logoLobby" alt="לוגו">
+    <h1 class="goldtext" id="titleLobby">חידון קליקרים</h1>
+    <div class="call">חייגו עכשיו:</div>
+    <div class="num goldtext" id="phoneNum">033050575</div>
+    <div class="room">קוד חדר: <b id="roomL">—</b></div>
+    <div class="pulse" style="font-size:2.6vh;color:var(--cream-dim)">ממתינים למנחה שיתחיל…</div>
+  </div>
+
+  <!-- שאלה / חשיפה -->
+  <div class="screen" id="game">
+    <div class="topbar">
+      <img class="logo" id="logoGame" alt="לוגו">
+      <div class="q" id="q">—</div>
+      <div class="meta"><div class="total goldtext"><span id="total">0</span></div><small>הצביעו</small>
+        <div class="room2">חדר <b id="roomG">—</b></div></div>
+    </div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <!-- מנצח -->
+  <div class="screen center" id="ended">
+    <img class="logo" id="logoEnd" alt="לוגו">
+    <h1 class="goldtext">🏆 המנצחים</h1>
+    <div class="subttl" id="endSub">כל הכבוד למשתתפים!</div>
+    <div class="podium" id="podium"></div>
+    <div class="fulllead" id="fulllead"></div>
+  </div>
+
+<script>
+  const params=new URLSearchParams(location.search);
+  const room=params.get('room')||'1234';
+  if(params.get('phone')) document.getElementById('phoneNum').textContent=params.get('phone');
+  document.getElementById('roomL').textContent=room;
+  document.getElementById('roomG').textContent=room;
+
+  const bars=document.getElementById('bars');
+  for(let i=1;i<=6;i++) bars.insertAdjacentHTML('beforeend',
+    `<div class="row" id="row${i}"><div class="num n${i}">${i}</div>
+      <div class="track"><div class="fill n${i}" id="fill${i}" style="width:0"></div>
+        <div class="lbl"><span class="name" id="lbl${i}">—</span><span class="cnt"><span id="cnt${i}">0</span> · <span id="pct${i}">0%</span></span></div></div></div>`);
+
+  function show(id){ ['lobby','game','ended'].forEach(s=>document.getElementById(s).classList.toggle('on',s===id)); }
+  function initial(name){ const s=String(name||'').trim(); return s ? s[0] : '?'; }
+
+  // מיתוג — לוגו + כותרת
+  async function loadBranding(){
+    try{ const b=await (await fetch(`/api/${room}/branding`)).json();
+      const t=b.title||'חידון קליקרים'; document.getElementById('titleLobby').textContent=t;
+      ['logoLobby','logoGame','logoEnd'].forEach(id=>{ const el=document.getElementById(id);
+        if(b.logo){ el.src=b.logo; el.classList.add('show'); } else { el.classList.remove('show'); } });
+    }catch(e){}
+  }
+  loadBranding();
+
+  function render(d){
+    if(d.phase==='lobby'){ show('lobby'); return; }
+    if(d.phase==='ended'){
+      show('ended');
+      const pod=d.podium||[];
+      document.getElementById('endSub').textContent = pod.length ? 'כל הכבוד למשתתפים!' : 'לא נרשמו משתתפים';
+      const order=[pod[1],pod[0],pod[2]], cls=['p2','p1','p3'], rnk=[2,1,3]; // סדר ויזואלי: 2 · 1 · 3
+      document.getElementById('podium').innerHTML = pod.length
+        ? order.map((x,i)=> x?`<div class="pod ${cls[i]}">
+            <div class="crown">👑</div>
+            <div class="avatar">${initial(x.name)}</div>
+            <div class="name">${x.name}</div>
+            <div class="pedestal"><div class="rank">${rnk[i]}</div><div class="pts">${x.pts} נק'</div></div>
+          </div>`:'').join('')
+        : '<div class="pod p1"><div class="crown">👑</div><div class="avatar">—</div><div class="name">אין משתתפים</div><div class="pedestal"><div class="rank">1</div></div></div>';
+      const lb=d.leaderboard||[];
+      document.getElementById('fulllead').innerHTML = lb.slice(3).map((x,i)=>`<span>${i+4}. <b>${x.name}</b> · ${x.pts}</span>`).join('');
+      return;
+    }
+    show('game');
+    const counts=d.counts||{},total=d.total||0,opts=(d.question&&d.question.options)||[];
+    document.getElementById('total').textContent=total;
+    document.getElementById('q').textContent=(d.question&&d.question.text)||'—';
+    const n=opts.filter(x=>x&&x.trim()).length||0;
+    for(let i=1;i<=6;i++){
+      const c=counts[i]||0,pct=total?Math.round(c/total*100):0;
+      document.getElementById('fill'+i).style.width=pct+'%';
+      document.getElementById('cnt'+i).textContent=c;
+      document.getElementById('pct'+i).textContent=pct+'%';
+      const label=opts[i-1]&&opts[i-1].trim()?opts[i-1]:'—';
+      document.getElementById('lbl'+i).innerHTML=label+(d.correct==i?'<span class="tag">✔ נכונה</span>':'');
+      const row=document.getElementById('row'+i);
+      row.style.display=(i<=n||n===0)?'flex':'none';
+      row.classList.toggle('correct',d.revealed&&d.correct==i);
+      row.classList.toggle('dim',d.revealed&&d.correct!=null&&d.correct!=i);
+    }
+  }
+
+  const proto=location.protocol==='https:'?'wss':'ws';
+  function connect(){const ws=new WebSocket(`${proto}://${location.host}/?room=${room}`);
+    ws.onmessage=e=>{const m=JSON.parse(e.data); if(m.type==='branding'){loadBranding();return;} render(m);};
+    ws.onclose=()=>setTimeout(connect,2000);}
+  connect();
+</script>
+</body>
+</html>
