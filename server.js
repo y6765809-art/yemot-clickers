@@ -208,6 +208,13 @@ router.get('/', async (call) => {
   await call.id_list_message([{ type: 'text', data: 'תודה, קולך נקלט' }]);
   return call.hangup();
 });
+
+// שורש (/): בקשת ימות אמיתית מגיעה תמיד עם ApiCallId → מעבירים לראוטר של ימות.
+// בקשת דפדפן רגילה (בלי פרמטרים) → מפנים למסך הבקרה במקום הודעת שגיאה.
+app.get('/', (req, res, next) => {
+  if (req.query.ApiCallId) return next();
+  res.redirect(302, '/dashboard.html');
+});
 app.use(router);
 
 // ── שרת + WebSocket ──
