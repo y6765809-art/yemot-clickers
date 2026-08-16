@@ -29,8 +29,15 @@
   /* זהב עמוק וקריא על רקע בהיר (בלי clip שביר) */
   .goldtext{color:#9A6B16;text-shadow:0 1px 0 rgba(255,255,255,.55)}
   .screen{display:none;height:100vh;flex-direction:column;padding:4vh 5vw;position:relative;z-index:1}
-  .screen.on{display:flex}
+  .screen.on{display:flex;animation:screenIn .55s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes screenIn{from{opacity:0;transform:translateY(1.4vh)}to{opacity:1;transform:none}}
   .center{align-items:center;justify-content:center;text-align:center;gap:2.4vh}
+  /* קונפטי חגיגי */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:6;display:none}
+  #confetti.on{display:block}
+  /* פעימת "הצבעה חדשה" */
+  @keyframes votePop{0%{transform:scale(1)}38%{transform:scale(1.26)}100%{transform:scale(1)}}
+  .total.pop{animation:votePop .45s ease}
   .logo{max-height:16vh;max-width:40vw;object-fit:contain;filter:drop-shadow(0 .6vh 1.6vh rgba(0,0,0,.4));display:none}
   .logo.show{display:block}
   /* לובי */
@@ -111,6 +118,7 @@
 </style>
 </head>
 <body>
+  <canvas id="confetti"></canvas>
   <!-- לובי -->
   <div class="screen center on" id="lobby">
     <img class="logo" id="logoLobby" alt="לוגו">
@@ -157,6 +165,32 @@
   function show(id){ ['lobby','game','ended'].forEach(s=>document.getElementById(s).classList.toggle('on',s===id)); }
   function initial(name){ const s=String(name||'').trim(); return s ? s[0] : '?'; }
 
+  // ── קונפטי חגיגי (canvas, בלי ספריות) ──
+  const cc=document.getElementById('confetti'), cx=cc.getContext('2d');
+  const CONF=['#E4C36A','#9B2D3A','#2E6B4F','#C05621','#6E3B5E','#F5D888','#3FD99B'];
+  let confP=[], confRAF=0;
+  function sizeConf(){ cc.width=innerWidth; cc.height=innerHeight; }
+  addEventListener('resize',sizeConf); sizeConf();
+  function fireConfetti(){
+    sizeConf(); cc.classList.add('on'); confP=[];
+    for(let i=0;i<170;i++) confP.push({
+      x:Math.random()*cc.width, y:-20-Math.random()*cc.height*0.5,
+      r:5+Math.random()*7, c:CONF[i%CONF.length],
+      vy:2.2+Math.random()*3.6, vx:-1.6+Math.random()*3.2,
+      rot:Math.random()*6.28, vr:-0.22+Math.random()*0.44 });
+    const t0=performance.now(); cancelAnimationFrame(confRAF);
+    (function loop(t){
+      cx.clearRect(0,0,cc.width,cc.height); let alive=0;
+      for(const p of confP){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.035; p.rot+=p.vr;
+        if(p.y<cc.height+30) alive++;
+        cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot);
+        cx.fillStyle=p.c; cx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.62); cx.restore(); }
+      if(alive>0 && t-t0<7000) confRAF=requestAnimationFrame(loop);
+      else { cx.clearRect(0,0,cc.width,cc.height); cc.classList.remove('on'); }
+    })(t0);
+  }
+  let lastPhase=null, lastTotal=0;
+
   // מיתוג — לוגו + כותרת
   async function loadBranding(){
     try{ const b=await (await fetch(`/api/${room}/branding`)).json();
@@ -168,10 +202,13 @@
   loadBranding();
 
   function render(d){
+    const phaseChanged = d.phase!==lastPhase; lastPhase=d.phase;
+    if(d.phase!=='question') lastTotal=0;
     if(d.phase==='lobby'){ show('lobby'); return; }
     if(d.phase==='ended'){
       show('ended');
       const pod=d.podium||[];
+      if(phaseChanged && pod.length) fireConfetti();
       document.getElementById('endSub').textContent = pod.length ? 'כל הכבוד למשתתפים!' : 'לא נרשמו משתתפים';
       const order=[pod[1],pod[0],pod[2]], cls=['p2','p1','p3'], rnk=[2,1,3]; // סדר ויזואלי: 2 · 1 · 3
       document.getElementById('podium').innerHTML = pod.length
@@ -189,6 +226,8 @@
     show('game');
     const counts=d.counts||{},total=d.total||0,opts=(d.question&&d.question.options)||[];
     document.getElementById('total').textContent=total;
+    if(total>lastTotal){ const te=document.querySelector('#game .total'); if(te){ te.classList.remove('pop'); void te.offsetWidth; te.classList.add('pop'); } }
+    lastTotal=total;
     document.getElementById('q').textContent=(d.question&&d.question.text)||'—';
     const n=opts.filter(x=>x&&x.trim()).length||0;
     for(let i=1;i<=6;i++){

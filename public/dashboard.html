@@ -270,7 +270,12 @@
             <div class="box"><div class="lab">מחייגים אל</div><div class="val" id="dialPhone">033050575</div></div>
             <div class="box"><div class="lab">מקישים קוד</div><div class="val" id="dialRoom">—</div></div>
           </div>
-          <div class="muted" style="margin-top:13px;text-align:center">כשהכל מוכן — עברו ל<b>ניהול המשחק</b> בצד השני והתחילו ▶</div>
+          <div class="btns" style="justify-content:center;margin-top:15px">
+            <button class="primary sm" onclick="copyLink('presenter')">📺 העתק קישור הקרנה</button>
+            <button class="ghost sm" onclick="copyLink('dashboard')">🎛️ העתק קישור בקרה</button>
+          </div>
+          <div class="msg" id="linkMsg" style="text-align:center"></div>
+          <div class="muted" style="margin-top:11px;text-align:center">כשהכל מוכן — עברו ל<b>ניהול המשחק</b> בצד השני והתחילו ▶</div>
         </div>
       </div>
     </div>
@@ -349,6 +354,13 @@
   const post=(p,b)=>fetch(`/api/${room}/${p}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
   const api=(p,b)=>post(p,b);
   const flash=(id,txt)=>{const e=document.getElementById(id);e.textContent=txt;setTimeout(()=>{if(e.textContent===txt)e.textContent='';},2600);};
+  function copyLink(which){
+    const url=`${location.origin}/${which}.html?room=${room}`;
+    const done=()=>flash('linkMsg','✓ הועתק: '+url);
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(()=>flash('linkMsg',url)); }
+    else{ const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select();
+      try{document.execCommand('copy');done();}catch(e){flash('linkMsg',url);} t.remove(); }
+  }
 
   // ── שלב 1: מיתוג ──
   let logoData='';
