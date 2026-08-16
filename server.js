@@ -170,6 +170,8 @@ app.post('/api/:room/branding', (req, res) => {
 // ── שלוחת ימות ──
 const router = YemotRouter({
   printLog: true, timeout: '30s',
+  // הסרה אוטומטית של תווים שאסורים בהקראת ימות (. - ' " &) מכל הטקסטים
+  defaults: { removeInvalidChars: true },
   uncaughtErrorHandler: async (err, call) => {
     // רוב ה"שגיאות" הן פשוט חוסר הקשה (timeout) או ניתוק — לא צריך להבהיל
     console.error('Yemot handler ended:', err && err.message);
