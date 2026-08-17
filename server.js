@@ -183,7 +183,16 @@ const router = YemotRouter({
 });
 
 // המתקשר נשאר על הקו לאורך כל המשחק: מצביע → ממתין → נשאל בשאלה הבאה באותה שיחה.
-const WAIT_SEC = 6; // כל כמה שניות לבדוק אם יש שאלה חדשה (בזמן המתנה)
+const WAIT_SEC = 7; // כל כמה שניות לבדוק אם יש שאלה חדשה (בזמן המתנה)
+const HOLD_MUSIC = process.env.HOLD_MUSIC ?? 'ztomao'; // מוזיקת המתנה (שם מוזיקה בימות); ריק = בלי מוזיקה
+// בונה הודעות המתנה: טקסט (אופציונלי) + מוזיקה בהמתנה
+function holdMsgs(text) {
+  const m = [];
+  if (text) m.push({ type: 'text', data: text });
+  if (HOLD_MUSIC) m.push({ type: 'music_on_hold', data: { musicName: HOLD_MUSIC, maxSec: WAIT_SEC } });
+  return m.length ? m : [{ type: 'text', data: 'אנא המתינו' }];
+}
+const holdOpts = { sec_wait: HOLD_MUSIC ? 1 : WAIT_SEC, allow_empty: true, empty_val: '', max_digits: 1 };
 router.get('/', async (call) => {
   if (YEMOT_SECRET && call.values.secret !== YEMOT_SECRET) return call.hangup();
 
@@ -219,16 +228,12 @@ router.get('/', async (call) => {
                  sec_wait: 20, allow_empty: true, empty_val: '' });
       if (answer) { r.votes.set(call.phone, String(answer)); broadcast(code); }
       votedIdx = r.idx;
-      await call.read(
-        [{ type: 'text', data: answer ? 'קולך נקלט, ממתינים לשאלה הבאה' : 'ממתינים לשאלה הבאה' }],
-        'tap', { sec_wait: WAIT_SEC, allow_empty: true, empty_val: '', max_digits: 1 });
+      await call.read(holdMsgs(answer ? 'קולך נקלט, ממתינים לשאלה הבאה' : 'ממתינים לשאלה הבאה'), 'tap', holdOpts);
     } else {
-      // אין כרגע שאלה חדשה — נשארים על הקו וממתינים, ובודקים שוב
-      const msg = greeted ? 'ממתינים לשאלה הבאה, אנא המתינו' : 'התחברת לחדר, ממתינים שהמנחה יתחיל';
+      // אין כרגע שאלה חדשה — נשארים על הקו עם מוזיקת המתנה, ובודקים שוב
+      const msg = greeted ? '' : 'התחברת לחדר, ממתינים שהמנחה יתחיל את המשחק';
       greeted = true;
-      await call.read(
-        [{ type: 'text', data: msg }],
-        'tap', { sec_wait: WAIT_SEC, allow_empty: true, empty_val: '', max_digits: 1 });
+      await call.read(holdMsgs(msg), 'tap', holdOpts);
     }
   }
 });
