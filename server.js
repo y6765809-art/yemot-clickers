@@ -79,6 +79,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
+// בדיקת בריאות + יעד ל-self-ping (שהשרת לא יירדם)
+app.get('/healthz', (req, res) => res.type('text').send('ok'));
+
 // שמירת מאגר השאלות (מראש)
 app.post('/api/:room/questions', (req, res) => {
   const r = getRoom(req.params.room);
@@ -179,36 +182,55 @@ const router = YemotRouter({
   }
 });
 
+// המתקשר נשאר על הקו לאורך כל המשחק: מצביע → ממתין → נשאל בשאלה הבאה באותה שיחה.
+const WAIT_SEC = 6; // כל כמה שניות לבדוק אם יש שאלה חדשה (בזמן המתנה)
 router.get('/', async (call) => {
   if (YEMOT_SECRET && call.values.secret !== YEMOT_SECRET) return call.hangup();
 
   const code = await call.read(
     [{ type: 'text', data: 'הקישו את קוד החדר' }],
-    'tap', { val_name: 'ROOM', min_digits: 3, max_digits: 6, sec_wait: 10 });
+    'tap', { min_digits: 3, max_digits: 6, sec_wait: 10 });
   const r = getRoom(code);
-  const q = curQ(r);
 
-  if (r.phase !== 'question' || !r.active || !q) {
-    await call.id_list_message([{ type: 'text', data: 'אין כרגע שאלה פעילה, נסו שוב מאוחר יותר' }]);
-    return call.hangup();
+  let votedIdx = -1;   // האינדקס האחרון שעליו כבר הצבעתי בשיחה זו
+  let greeted = false;
+
+  // לולאה חיה — נשארים על הקו עד שהמשחק מסתיים (או שהמתקשר מנתק)
+  while (true) {
+    const q = curQ(r);
+
+    if (r.phase === 'ended') {
+      await call.id_list_message([{ type: 'text', data: 'המשחק הסתיים, תודה שהשתתפתם ולהתראות' }]);
+      return call.hangup();
+    }
+
+    // שאלה פעילה חדשה שעדיין לא הצבעתי עליה → הקראה וקליטת תשובה
+    if (r.phase === 'question' && r.active && q && r.idx !== votedIdx) {
+      const n = numOpts(q); const opts = q.options || [];
+      let prompt = q.text ? q.text + '. ' : '';
+      for (let i = 0; i < n; i++) {
+        const label = (opts[i] && String(opts[i]).trim()) ? opts[i] : ('אפשרות ' + (i + 1));
+        prompt += `לתשובה ${label} הקישו ${i + 1}. `;
+      }
+      const answer = await call.read(
+        [{ type: 'text', data: prompt }],
+        'tap', { min_digits: 1, max_digits: 1,
+                 digits_allowed: Array.from({ length: n }, (_, i) => i + 1),
+                 sec_wait: 20, allow_empty: true, empty_val: '' });
+      if (answer) { r.votes.set(call.phone, String(answer)); broadcast(code); }
+      votedIdx = r.idx;
+      await call.read(
+        [{ type: 'text', data: answer ? 'קולך נקלט, ממתינים לשאלה הבאה' : 'ממתינים לשאלה הבאה' }],
+        'tap', { sec_wait: WAIT_SEC, allow_empty: true, empty_val: '', max_digits: 1 });
+    } else {
+      // אין כרגע שאלה חדשה — נשארים על הקו וממתינים, ובודקים שוב
+      const msg = greeted ? 'ממתינים לשאלה הבאה, אנא המתינו' : 'התחברת לחדר, ממתינים שהמנחה יתחיל';
+      greeted = true;
+      await call.read(
+        [{ type: 'text', data: msg }],
+        'tap', { sec_wait: WAIT_SEC, allow_empty: true, empty_val: '', max_digits: 1 });
+    }
   }
-
-  // הקראת השאלה + התשובות בשמותיהן
-  const n = numOpts(q); const opts = q.options || [];
-  let prompt = q.text ? q.text + '. ' : '';
-  for (let i = 0; i < n; i++) {
-    const label = (opts[i] && String(opts[i]).trim()) ? opts[i] : ('אפשרות ' + (i + 1));
-    prompt += `לתשובה ${label} הקישו ${i + 1}. `;
-  }
-  const answer = await call.read(
-    [{ type: 'text', data: prompt }],
-    'tap', { val_name: 'ANSWER', min_digits: 1, max_digits: 1,
-             digits_allowed: Array.from({ length: n }, (_, i) => i + 1), sec_wait: 15 });
-
-  r.votes.set(call.phone, String(answer));
-  broadcast(code);
-  await call.id_list_message([{ type: 'text', data: 'תודה, קולך נקלט' }]);
-  return call.hangup();
 });
 
 // שורש (/): בקשת ימות אמיתית מגיעה תמיד עם ApiCallId → מעבירים לראוטר של ימות.
@@ -234,3 +256,15 @@ server.listen(PORT, () => {
   console.log(`✅ קליקרים · משחק חידון v3 · פורט ${PORT}`);
   console.log(`   דשבורד: /dashboard.html?room=1234   הקרנה: /presenter.html?room=1234`);
 });
+
+// ── Keep-alive: self-ping כדי שהשרת החינמי לא יירדם ──
+// Render מספק את RENDER_EXTERNAL_URL אוטומטית; פינג עצמי כל 10 דק' נחשב תעבורה נכנסת
+const SELF_URL = process.env.SELF_URL || process.env.RENDER_EXTERNAL_URL;
+if (SELF_URL) {
+  setInterval(() => {
+    fetch(SELF_URL.replace(/\/$/, '') + '/healthz')
+      .then(() => console.log('⏰ keep-alive ping ok'))
+      .catch(err => console.log('keep-alive ping failed:', err && err.message));
+  }, 10 * 60 * 1000); // כל 10 דקות
+  console.log(`🔄 keep-alive פעיל אל ${SELF_URL}`);
+}
